@@ -6,5 +6,5 @@ export const databaseConfig: TypeOrmModuleOptions = {
   database: ':memory:',
   entities: [join(__dirname, '../**/*.entity{.ts,.js}')],
   synchronize: true,
-  logging: true,
+  logging: false,
 };

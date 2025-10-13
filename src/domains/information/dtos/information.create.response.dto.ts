@@ -18,6 +18,8 @@ export class InformationCreateResponseDto {
   file_identifier?: number;
   main_category: WikiMainCategory;
   sub_category: WikiSubCategory;
+  user_identifier: string;
+  user_name: string;
   created_at: Date;
   updated_at: Date;
 }

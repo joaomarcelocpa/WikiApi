@@ -1,7 +1,7 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
 import { InformationRepository } from '../repositories/information.repository';
 import { InformationCreateDto } from '../dtos/information.create.dto';
@@ -11,14 +11,13 @@ import { InformationUpdateResponseDto } from '../dtos/information.update.respons
 import { InformationViewResponseDto } from '../dtos/information.view.response.dto';
 import { InformationDeleteResponseDto } from '../dtos/information.delete.response.dto';
 import {
+  CATEGORY_HIERARCHY,
   WikiMainCategory,
   WikiSubCategory,
-  CATEGORY_HIERARCHY,
 } from '../enums/categories.enum';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { File } from '../entities/file.entity';
-import { createId } from '@paralleldrive/cuid2';
 
 @Injectable()
 export class InformationService {
@@ -30,27 +29,48 @@ export class InformationService {
 
   async create(
     dto: InformationCreateDto,
+    userId: string,
+    userName: string,
   ): Promise<InformationCreateResponseDto> {
-    // Valida se a subcategoria pertence à categoria principal
     this.validateCategoryHierarchy(dto.main_category, dto.sub_category);
 
-    // Valida se o arquivo existe, se informado
     if (dto.file_identifier) {
       await this.validateFileExists(dto.file_identifier);
     }
 
-    const identifier = createId();
-
     const information = await this.informationRepository.create({
-      identifier,
       question: dto.question,
       content: dto.content,
       file_identifier: dto.file_identifier,
       main_category: dto.main_category,
       sub_category: dto.sub_category,
+      user_identifier: userId,
+      user_name: userName,
     });
 
-    return information;
+    return {
+      identifier: information.identifier,
+      question: information.question,
+      content: information.content,
+      file: information.file
+        ? {
+            id: information.file.id,
+            originalName: information.file.originalName,
+            fileName: information.file.fileName,
+            path: information.file.path,
+            mimetype: information.file.mimetype,
+            size: information.file.size,
+            uploaded_at: information.file.uploaded_at,
+          }
+        : undefined,
+      file_identifier: information.file_identifier,
+      main_category: information.main_category,
+      sub_category: information.sub_category,
+      user_identifier: information.user_identifier,
+      user_name: information.user_name,
+      created_at: information.created_at,
+      updated_at: information.updated_at,
+    };
   }
 
   async update(
@@ -66,12 +86,10 @@ export class InformationService {
       );
     }
 
-    // Valida hierarquia de categorias se ambas forem informadas
     if (dto.main_category && dto.sub_category) {
       this.validateCategoryHierarchy(dto.main_category, dto.sub_category);
     }
 
-    // Se apenas a main_category for atualizada, valida se a sub_category atual é compatível
     if (dto.main_category && !dto.sub_category) {
       this.validateCategoryHierarchy(
         dto.main_category,
@@ -79,7 +97,6 @@ export class InformationService {
       );
     }
 
-    // Se apenas a sub_category for atualizada, valida se é compatível com a main_category atual
     if (!dto.main_category && dto.sub_category) {
       this.validateCategoryHierarchy(
         information.main_category,
@@ -87,7 +104,6 @@ export class InformationService {
       );
     }
 
-    // Valida arquivo se informado e não for undefined
     if (dto.file_identifier !== undefined && dto.file_identifier !== null) {
       await this.validateFileExists(dto.file_identifier);
     }
@@ -103,7 +119,29 @@ export class InformationService {
       );
     }
 
-    return updatedInformation;
+    return {
+      identifier: updatedInformation.identifier,
+      question: updatedInformation.question,
+      content: updatedInformation.content,
+      file: updatedInformation.file
+        ? {
+            id: updatedInformation.file.id,
+            originalName: updatedInformation.file.originalName,
+            fileName: updatedInformation.file.fileName,
+            path: updatedInformation.file.path,
+            mimetype: updatedInformation.file.mimetype,
+            size: updatedInformation.file.size,
+            uploaded_at: updatedInformation.file.uploaded_at,
+          }
+        : undefined,
+      file_identifier: updatedInformation.file_identifier,
+      main_category: updatedInformation.main_category,
+      sub_category: updatedInformation.sub_category,
+      user_identifier: updatedInformation.user_identifier,
+      user_name: updatedInformation.user_name,
+      created_at: updatedInformation.created_at,
+      updated_at: updatedInformation.updated_at,
+    };
   }
 
   async delete(identifier: string): Promise<InformationDeleteResponseDto> {
@@ -141,26 +179,127 @@ export class InformationService {
       );
     }
 
-    return information;
+    return {
+      identifier: information.identifier,
+      question: information.question,
+      content: information.content,
+      file: information.file
+        ? {
+            id: information.file.id,
+            originalName: information.file.originalName,
+            fileName: information.file.fileName,
+            path: information.file.path,
+            mimetype: information.file.mimetype,
+            size: information.file.size,
+            uploaded_at: information.file.uploaded_at,
+          }
+        : undefined,
+      file_identifier: information.file_identifier,
+      main_category: information.main_category,
+      sub_category: information.sub_category,
+      user_identifier: information.user_identifier,
+      user_name: information.user_name,
+      created_at: information.created_at,
+      updated_at: information.updated_at,
+    };
   }
 
   async findAll(): Promise<InformationViewResponseDto[]> {
-    return await this.informationRepository.findAll();
+    const informations = await this.informationRepository.findAll();
+
+    return informations.map((information): InformationViewResponseDto => {
+      return {
+        identifier: information.identifier,
+        question: information.question,
+        content: information.content,
+        file: information.file
+          ? {
+              id: information.file.id,
+              originalName: information.file.originalName,
+              fileName: information.file.fileName,
+              path: information.file.path,
+              mimetype: information.file.mimetype,
+              size: information.file.size,
+              uploaded_at: information.file.uploaded_at,
+            }
+          : undefined,
+        file_identifier: information.file_identifier,
+        main_category: information.main_category,
+        sub_category: information.sub_category,
+        user_identifier: information.user_identifier,
+        user_name: information.user_name,
+        created_at: information.created_at,
+        updated_at: information.updated_at,
+      };
+    });
   }
 
   async findByMainCategory(
     mainCategory: WikiMainCategory,
   ): Promise<InformationViewResponseDto[]> {
-    return await this.informationRepository.findByMainCategory(mainCategory);
+    const informations =
+      await this.informationRepository.findByMainCategory(mainCategory);
+
+    return informations.map((information): InformationViewResponseDto => {
+      return {
+        identifier: information.identifier,
+        question: information.question,
+        content: information.content,
+        file: information.file
+          ? {
+              id: information.file.id,
+              originalName: information.file.originalName,
+              fileName: information.file.fileName,
+              path: information.file.path,
+              mimetype: information.file.mimetype,
+              size: information.file.size,
+              uploaded_at: information.file.uploaded_at,
+            }
+          : undefined,
+        file_identifier: information.file_identifier,
+        main_category: information.main_category,
+        sub_category: information.sub_category,
+        user_identifier: information.user_identifier,
+        user_name: information.user_name,
+        created_at: information.created_at,
+        updated_at: information.updated_at,
+      };
+    });
   }
 
   async findBySubCategory(
     subCategory: WikiSubCategory,
   ): Promise<InformationViewResponseDto[]> {
-    return await this.informationRepository.findBySubCategory(subCategory);
+    const informations =
+      await this.informationRepository.findBySubCategory(subCategory);
+
+    return informations.map((information): InformationViewResponseDto => {
+      return {
+        identifier: information.identifier,
+        question: information.question,
+        content: information.content,
+        file: information.file
+          ? {
+              id: information.file.id,
+              originalName: information.file.originalName,
+              fileName: information.file.fileName,
+              path: information.file.path,
+              mimetype: information.file.mimetype,
+              size: information.file.size,
+              uploaded_at: information.file.uploaded_at,
+            }
+          : undefined,
+        file_identifier: information.file_identifier,
+        main_category: information.main_category,
+        sub_category: information.sub_category,
+        user_identifier: information.user_identifier,
+        user_name: information.user_name,
+        created_at: information.created_at,
+        updated_at: information.updated_at,
+      };
+    });
   }
 
-  // Métodos auxiliares privados
   private validateCategoryHierarchy(
     mainCategory: WikiMainCategory,
     subCategory: WikiSubCategory,

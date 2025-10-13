@@ -9,6 +9,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  // UseGuards,
 } from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import { UserCreateDto } from '../dtos/user.create.dto';
@@ -18,8 +19,12 @@ import { UserUpdateResponseDto } from '../dtos/user.update.response.dto';
 import { UserViewResponseDto } from '../dtos/user.view.response.dto';
 import { UserDeleteResponseDto } from '../dtos/user.delete.response.dto';
 import { UserType } from '../enums/user-type.enum';
+// import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { JwtUser } from '../../auth/interfaces/jwt-user.interface';
 
 @Controller('users')
+// @UseGuards(JwtAuthGuard)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -60,5 +65,11 @@ export class UserController {
     }
 
     return await this.userService.findAll();
+  }
+
+  @Get('me/profile')
+  @HttpCode(HttpStatus.OK)
+  getProfile(@CurrentUser() user: JwtUser): JwtUser {
+    return user;
   }
 }

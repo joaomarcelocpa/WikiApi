@@ -9,6 +9,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { InformationService } from '../services/information.service';
 import { InformationCreateDto } from '../dtos/information.create.dto';
@@ -18,8 +19,12 @@ import { InformationUpdateResponseDto } from '../dtos/information.update.respons
 import { InformationViewResponseDto } from '../dtos/information.view.response.dto';
 import { InformationDeleteResponseDto } from '../dtos/information.delete.response.dto';
 import { WikiMainCategory, WikiSubCategory } from '../enums/categories.enum';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { JwtUser } from '../../auth/interfaces/jwt-user.interface';
 
 @Controller('information')
+@UseGuards(JwtAuthGuard)
 export class InformationController {
   constructor(private readonly informationService: InformationService) {}
 
@@ -27,8 +32,9 @@ export class InformationController {
   @HttpCode(HttpStatus.CREATED)
   async create(
     @Body() dto: InformationCreateDto,
+    @CurrentUser() user: JwtUser,
   ): Promise<InformationCreateResponseDto> {
-    return await this.informationService.create(dto);
+    return await this.informationService.create(dto, user.id, user.name);
   }
 
   @Put(':identifier')

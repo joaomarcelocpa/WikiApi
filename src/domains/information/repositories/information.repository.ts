@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Information } from '../entities/information.entity';
 import { WikiMainCategory, WikiSubCategory } from '../enums/categories.enum';
+import { createId } from '@paralleldrive/cuid2';
 
 @Injectable()
 export class InformationRepository {
@@ -12,7 +13,10 @@ export class InformationRepository {
   ) {}
 
   async create(information: Partial<Information>): Promise<Information> {
-    const entity = this.repository.create(information);
+    const entity = this.repository.create({
+      identifier: createId(), // Gera o ID explicitamente
+      ...information,
+    });
     return await this.repository.save(entity);
   }
 
@@ -55,9 +59,17 @@ export class InformationRepository {
     identifier: string,
     data: Partial<Information>,
   ): Promise<Information | null> {
+    const updateData: Record<string, any> = {};
+
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== undefined) {
+        updateData[key] = value;
+      }
+    }
+
     await this.repository.update(
       { identifier, deleted: false },
-      { ...data, updated_at: new Date() },
+      { ...updateData, updated_at: new Date() },
     );
     return await this.findByIdentifier(identifier);
   }

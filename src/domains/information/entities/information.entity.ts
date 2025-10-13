@@ -20,15 +20,17 @@ export class Information {
   @Column({ nullable: true })
   file_identifier: number;
 
-  @Column({
-    type: 'varchar',
-  })
+  @Column({ type: 'varchar' })
   main_category: WikiMainCategory;
 
-  @Column({
-    type: 'varchar',
-  })
+  @Column({ type: 'varchar' })
   sub_category: WikiSubCategory;
+
+  @Column({ type: 'varchar' })
+  user_identifier: string;
+
+  @Column({ type: 'varchar' })
+  user_name: string;
 
   @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
