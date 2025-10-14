@@ -1,6 +1,7 @@
 export enum WikiMainCategory {
-  PAINEL_SMS = 'DUVIDAS_GERAIS_SMS',
+  PAINEL_SMS = 'SMS',
   BACKOFFICE = 'BACKOFFICE',
+  GENERAL_QUESTIONS = 'GENERAL_QUESTIONS',
 }
 
 export enum WikiSubCategory {
@@ -12,7 +13,6 @@ export enum WikiSubCategory {
   SMS_RELATORIOS = 'SMS_RELATORIOS',
   SMS_API_EXTERNA = 'SMS_API_EXTERNA',
   SMS_FAQ = 'SMS_FAQ',
-
   BO_OPERACIONAL = 'BO_OPERACIONAL',
   BO_FINANCEIRO = 'BO_FINANCEIRO',
   BO_EMPRESAS = 'BO_EMPRESAS',
@@ -21,7 +21,34 @@ export enum WikiSubCategory {
   BO_MONITORAMENTO = 'BO_MONITORAMENTO',
   BO_USUARIOS = 'BO_USUARIOS',
   BO_FAQ = 'BO_FAQ',
+  GENERAL_QUESTIONS = 'GENERAL_QUESTIONS',
 }
+
+export const MAIN_CATEGORY_LABELS: Record<WikiMainCategory, string> = {
+  [WikiMainCategory.PAINEL_SMS]: 'SMS',
+  [WikiMainCategory.BACKOFFICE]: 'Backoffice',
+  [WikiMainCategory.GENERAL_QUESTIONS]: 'Perguntas Gerais',
+};
+
+export const SUB_CATEGORY_LABELS: Record<WikiSubCategory, string> = {
+  [WikiSubCategory.SMS_CAMPANHAS]: 'Campanhas',
+  [WikiSubCategory.SMS_BLACKLIST]: 'Blacklist',
+  [WikiSubCategory.SMS_FINANCEIRO]: 'Financeiro',
+  [WikiSubCategory.SMS_EMPRESAS]: 'Empresas',
+  [WikiSubCategory.SMS_SERVICOS]: 'Serviços',
+  [WikiSubCategory.SMS_RELATORIOS]: 'Relatórios',
+  [WikiSubCategory.SMS_API_EXTERNA]: 'API Externa',
+  [WikiSubCategory.SMS_FAQ]: 'FAQ',
+  [WikiSubCategory.BO_OPERACIONAL]: 'Operacional',
+  [WikiSubCategory.BO_FINANCEIRO]: 'Financeiro',
+  [WikiSubCategory.BO_EMPRESAS]: 'Empresas',
+  [WikiSubCategory.BO_FORNECEDORES]: 'Fornecedores',
+  [WikiSubCategory.BO_MENSAGERIA]: 'Mensageria',
+  [WikiSubCategory.BO_MONITORAMENTO]: 'Monitoramento',
+  [WikiSubCategory.BO_USUARIOS]: 'Usuários Backoffice',
+  [WikiSubCategory.BO_FAQ]: 'FAQ',
+  [WikiSubCategory.GENERAL_QUESTIONS]: 'Perguntas Gerais',
+};
 
 export const CATEGORY_HIERARCHY: Record<WikiMainCategory, WikiSubCategory[]> = {
   [WikiMainCategory.PAINEL_SMS]: [
@@ -44,30 +71,5 @@ export const CATEGORY_HIERARCHY: Record<WikiMainCategory, WikiSubCategory[]> = {
     WikiSubCategory.BO_USUARIOS,
     WikiSubCategory.BO_FAQ,
   ],
+  [WikiMainCategory.GENERAL_QUESTIONS]: [WikiSubCategory.GENERAL_QUESTIONS],
 };
-
-// export const CATEGORY_LABELS: Record<
-//   WikiMainCategory | WikiSubCategory,
-//   string
-// > = {
-//   [WikiMainCategory.PAINEL_SMS]: 'Dúvidas Gerais SMS',
-//   [WikiMainCategory.BACKOFFICE]: 'Backoffice',
-//
-//   [WikiSubCategory.SMS_CAMPANHAS]: 'Campanhas',
-//   [WikiSubCategory.SMS_BLACKLIST]: 'Blacklist',
-//   [WikiSubCategory.SMS_FINANCEIRO]: 'Financeiro',
-//   [WikiSubCategory.SMS_EMPRESAS]: 'Empresas',
-//   [WikiSubCategory.SMS_SERVICOS]: 'Serviços',
-//   [WikiSubCategory.SMS_RELATORIOS]: 'Relatórios',
-//   [WikiSubCategory.SMS_API_EXTERNA]: 'API Externa',
-//   [WikiSubCategory.SMS_FAQ]: 'FAQ',
-//
-//   [WikiSubCategory.BO_OPERACIONAL]: 'Operacional',
-//   [WikiSubCategory.BO_FINANCEIRO]: 'Financeiro',
-//   [WikiSubCategory.BO_EMPRESAS]: 'Empresas',
-//   [WikiSubCategory.BO_FORNECEDORES]: 'Fornecedores',
-//   [WikiSubCategory.BO_MENSAGERIA]: 'Mensageria',
-//   [WikiSubCategory.BO_MONITORAMENTO]: 'Monitoramento',
-//   [WikiSubCategory.BO_USUARIOS]: 'Usuários Backoffice',
-//   [WikiSubCategory.BO_FAQ]: 'FAQ',
-// };

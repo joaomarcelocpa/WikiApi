@@ -14,10 +14,22 @@ import {
   CATEGORY_HIERARCHY,
   WikiMainCategory,
   WikiSubCategory,
+  MAIN_CATEGORY_LABELS,
+  SUB_CATEGORY_LABELS,
 } from '../enums/categories.enum';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { File } from '../entities/file.entity';
+
+interface CategoryInfo {
+  value: string;
+  label: string;
+}
+
+export interface CategoryHierarchyResponse {
+  mainCategories: CategoryInfo[];
+  subCategories: Record<string, CategoryInfo[]>;
+}
 
 @Injectable()
 export class InformationService {
@@ -26,6 +38,29 @@ export class InformationService {
     @InjectRepository(File)
     private readonly fileRepository: Repository<File>,
   ) {}
+
+  public getCategories(): CategoryHierarchyResponse {
+    const mainCategories: CategoryInfo[] = Object.values(WikiMainCategory).map(
+      (value) => ({
+        value,
+        label: MAIN_CATEGORY_LABELS[value],
+      }),
+    );
+
+    const subCategories: Record<string, CategoryInfo[]> = {};
+
+    Object.entries(CATEGORY_HIERARCHY).forEach(([mainCat, subCats]) => {
+      subCategories[mainCat] = subCats.map((subCat) => ({
+        value: subCat,
+        label: SUB_CATEGORY_LABELS[subCat],
+      }));
+    });
+
+    return {
+      mainCategories,
+      subCategories,
+    };
+  }
 
   async create(
     dto: InformationCreateDto,

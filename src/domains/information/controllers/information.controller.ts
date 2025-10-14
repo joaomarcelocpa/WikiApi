@@ -22,6 +22,7 @@ import { WikiMainCategory, WikiSubCategory } from '../enums/categories.enum';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { JwtUser } from '../../auth/interfaces/jwt-user.interface';
+import { CategoryHierarchyResponse } from '../services/information.service';
 
 @Controller('information')
 @UseGuards(JwtAuthGuard)
@@ -71,11 +72,15 @@ export class InformationController {
     if (subCategory) {
       return await this.informationService.findBySubCategory(subCategory);
     }
-
     if (mainCategory) {
       return await this.informationService.findByMainCategory(mainCategory);
     }
-
     return await this.informationService.findAll();
+  }
+
+  @Get('types/categories')
+  @HttpCode(HttpStatus.OK)
+  getCategories(): CategoryHierarchyResponse {
+    return this.informationService.getCategories();
   }
 }
