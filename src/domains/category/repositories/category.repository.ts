@@ -23,7 +23,8 @@ export class CategoryRepository {
       identifier,
       ...category,
     });
-    const savedCategory = await this.categoryRepository.save(entity);
+
+    await this.categoryRepository.save(entity);
 
     if (subCategoryNames && subCategoryNames.length > 0) {
       const subCategories = subCategoryNames.map((name) =>
@@ -40,18 +41,36 @@ export class CategoryRepository {
   }
 
   async findByIdentifier(identifier: string): Promise<Category | null> {
-    return await this.categoryRepository.findOne({
+    const category = await this.categoryRepository.findOne({
       where: { identifier, deleted: false },
       relations: ['subCategories'],
     });
+
+    if (category && category.subCategories) {
+      category.subCategories = category.subCategories.filter(
+        (sub) => !sub.deleted,
+      );
+    }
+
+    return category;
   }
 
   async findAll(): Promise<Category[]> {
-    return await this.categoryRepository.find({
+    const categories = await this.categoryRepository.find({
       where: { deleted: false },
       relations: ['subCategories'],
       order: { created_at: 'DESC' },
     });
+
+    categories.forEach((category) => {
+      if (category.subCategories) {
+        category.subCategories = category.subCategories.filter(
+          (sub) => !sub.deleted,
+        );
+      }
+    });
+
+    return categories;
   }
 
   async findSubCategoriesByCategoryIdentifier(
