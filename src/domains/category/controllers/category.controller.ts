@@ -25,11 +25,11 @@ import {
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
 @Controller('category')
-@UseGuards(JwtAuthGuard)
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.CREATED)
   async create(
     @Body() dto: CategoryCreateDto,
@@ -38,6 +38,7 @@ export class CategoryController {
   }
 
   @Put(':identifier')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async update(
     @Param('identifier') identifier: string,
@@ -47,6 +48,7 @@ export class CategoryController {
   }
 
   @Delete(':identifier')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async delete(
     @Param('identifier') identifier: string,
@@ -72,10 +74,13 @@ export class CategoryController {
   @HttpCode(HttpStatus.OK)
   async findSubCategoriesByCategory(
     @Param('categoryIdentifier') categoryIdentifier: string,
-  ): Promise<CategoryViewResponseDto> {
-    return await this.categoryService.findSubCategoriesByCategory(
-      categoryIdentifier,
-    );
+  ) {
+    const category =
+      await this.categoryService.findSubCategoriesByCategory(
+        categoryIdentifier,
+      );
+
+    return category.subCategories || [];
   }
 
   @Get('subcategory/:identifier')
@@ -85,6 +90,7 @@ export class CategoryController {
   }
 
   @Post('subcategory')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.CREATED)
   async createSubCategory(
     @Body() dto: SubCategoryCreateDto,
@@ -93,6 +99,7 @@ export class CategoryController {
   }
 
   @Delete('subcategory/:identifier')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async deleteSubCategory(
     @Param('identifier') identifier: string,

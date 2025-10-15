@@ -23,11 +23,11 @@ import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { JwtUser } from '../../auth/interfaces/jwt-user.interface';
 
 @Controller('information')
-@UseGuards(JwtAuthGuard)
 export class InformationController {
   constructor(private readonly informationService: InformationService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.CREATED)
   async create(
     @Body() dto: InformationCreateDto,
@@ -37,6 +37,7 @@ export class InformationController {
   }
 
   @Put(':identifier')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async update(
     @Param('identifier') identifier: string,
@@ -46,6 +47,7 @@ export class InformationController {
   }
 
   @Delete(':identifier')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async delete(
     @Param('identifier') identifier: string,
