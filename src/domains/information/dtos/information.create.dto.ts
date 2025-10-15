@@ -1,11 +1,9 @@
 import {
   IsString,
   IsNotEmpty,
-  IsEnum,
   IsOptional,
   IsNumber,
 } from 'class-validator';
-import { WikiMainCategory, WikiSubCategory } from '../enums/categories.enum';
 
 export class InformationCreateDto {
   @IsString()
@@ -20,11 +18,11 @@ export class InformationCreateDto {
   @IsNumber()
   file_identifier?: number;
 
-  @IsEnum(WikiMainCategory)
+  @IsString()
   @IsNotEmpty()
-  main_category: WikiMainCategory;
+  category_identifier: string;
 
-  @IsEnum(WikiSubCategory)
+  @IsString()
   @IsNotEmpty()
-  sub_category: WikiSubCategory;
+  sub_category_identifier: string;
 }

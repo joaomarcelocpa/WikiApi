@@ -10,26 +10,12 @@ import { InformationCreateResponseDto } from '../dtos/information.create.respons
 import { InformationUpdateResponseDto } from '../dtos/information.update.response.dto';
 import { InformationViewResponseDto } from '../dtos/information.view.response.dto';
 import { InformationDeleteResponseDto } from '../dtos/information.delete.response.dto';
-import {
-  CATEGORY_HIERARCHY,
-  WikiMainCategory,
-  WikiSubCategory,
-  MAIN_CATEGORY_LABELS,
-  SUB_CATEGORY_LABELS,
-} from '../enums/categories.enum';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { File } from '../entities/file.entity';
-
-interface CategoryInfo {
-  value: string;
-  label: string;
-}
-
-export interface CategoryHierarchyResponse {
-  mainCategories: CategoryInfo[];
-  subCategories: Record<string, CategoryInfo[]>;
-}
+import { Category } from '../../category/entities/category.entity';
+import { SubCategory } from '../../category/entities/subcategory.entity';
+import { Information } from '../entities/information.entity';
 
 @Injectable()
 export class InformationService {
@@ -37,37 +23,40 @@ export class InformationService {
     private readonly informationRepository: InformationRepository,
     @InjectRepository(File)
     private readonly fileRepository: Repository<File>,
+    @InjectRepository(Category)
+    private readonly categoryRepository: Repository<Category>,
+    @InjectRepository(SubCategory)
+    private readonly subCategoryRepository: Repository<SubCategory>,
   ) {}
-
-  public getCategories(): CategoryHierarchyResponse {
-    const mainCategories: CategoryInfo[] = Object.values(WikiMainCategory).map(
-      (value) => ({
-        value,
-        label: MAIN_CATEGORY_LABELS[value],
-      }),
-    );
-
-    const subCategories: Record<string, CategoryInfo[]> = {};
-
-    Object.entries(CATEGORY_HIERARCHY).forEach(([mainCat, subCats]) => {
-      subCategories[mainCat] = subCats.map((subCat) => ({
-        value: subCat,
-        label: SUB_CATEGORY_LABELS[subCat],
-      }));
-    });
-
-    return {
-      mainCategories,
-      subCategories,
-    };
-  }
 
   async create(
     dto: InformationCreateDto,
     userId: string,
     userName: string,
   ): Promise<InformationCreateResponseDto> {
-    this.validateCategoryHierarchy(dto.main_category, dto.sub_category);
+    const category = await this.categoryRepository.findOne({
+      where: { identifier: dto.category_identifier, deleted: false },
+    });
+
+    if (!category) {
+      throw new NotFoundException(
+        `Categoria com identificador ${dto.category_identifier} não encontrada`,
+      );
+    }
+
+    const subCategory = await this.subCategoryRepository.findOne({
+      where: {
+        identifier: dto.sub_category_identifier,
+        deleted: false,
+        category_identifier: dto.category_identifier,
+      },
+    });
+
+    if (!subCategory) {
+      throw new BadRequestException(
+        `Subcategoria com identificador ${dto.sub_category_identifier} não encontrada ou não pertence à categoria selecionada`,
+      );
+    }
 
     if (dto.file_identifier) {
       await this.validateFileExists(dto.file_identifier);
@@ -77,35 +66,13 @@ export class InformationService {
       question: dto.question,
       content: dto.content,
       file_identifier: dto.file_identifier,
-      main_category: dto.main_category,
-      sub_category: dto.sub_category,
+      category_identifier: dto.category_identifier,
+      sub_category_identifier: dto.sub_category_identifier,
       user_identifier: userId,
       user_name: userName,
     });
 
-    return {
-      identifier: information.identifier,
-      question: information.question,
-      content: information.content,
-      file: information.file
-        ? {
-            id: information.file.id,
-            originalName: information.file.originalName,
-            fileName: information.file.fileName,
-            path: information.file.path,
-            mimetype: information.file.mimetype,
-            size: information.file.size,
-            uploaded_at: information.file.uploaded_at,
-          }
-        : undefined,
-      file_identifier: information.file_identifier,
-      main_category: information.main_category,
-      sub_category: information.sub_category,
-      user_identifier: information.user_identifier,
-      user_name: information.user_name,
-      created_at: information.created_at,
-      updated_at: information.updated_at,
-    };
+    return this.mapToResponse(information);
   }
 
   async update(
@@ -121,22 +88,36 @@ export class InformationService {
       );
     }
 
-    if (dto.main_category && dto.sub_category) {
-      this.validateCategoryHierarchy(dto.main_category, dto.sub_category);
+    if (dto.category_identifier) {
+      const category = await this.categoryRepository.findOne({
+        where: { identifier: dto.category_identifier, deleted: false },
+      });
+
+      if (!category) {
+        throw new NotFoundException(
+          `Categoria com identificador ${dto.category_identifier} não encontrada`,
+        );
+      }
     }
 
-    if (dto.main_category && !dto.sub_category) {
-      this.validateCategoryHierarchy(
-        dto.main_category,
-        information.sub_category,
-      );
-    }
+    // Validar subcategoria se fornecida
+    if (dto.sub_category_identifier) {
+      const categoryId =
+        dto.category_identifier || information.category_identifier;
 
-    if (!dto.main_category && dto.sub_category) {
-      this.validateCategoryHierarchy(
-        information.main_category,
-        dto.sub_category,
-      );
+      const subCategory = await this.subCategoryRepository.findOne({
+        where: {
+          identifier: dto.sub_category_identifier,
+          deleted: false,
+          category_identifier: categoryId,
+        },
+      });
+
+      if (!subCategory) {
+        throw new BadRequestException(
+          `Subcategoria com identificador ${dto.sub_category_identifier} não encontrada ou não pertence à categoria selecionada`,
+        );
+      }
     }
 
     if (dto.file_identifier !== undefined && dto.file_identifier !== null) {
@@ -154,29 +135,7 @@ export class InformationService {
       );
     }
 
-    return {
-      identifier: updatedInformation.identifier,
-      question: updatedInformation.question,
-      content: updatedInformation.content,
-      file: updatedInformation.file
-        ? {
-            id: updatedInformation.file.id,
-            originalName: updatedInformation.file.originalName,
-            fileName: updatedInformation.file.fileName,
-            path: updatedInformation.file.path,
-            mimetype: updatedInformation.file.mimetype,
-            size: updatedInformation.file.size,
-            uploaded_at: updatedInformation.file.uploaded_at,
-          }
-        : undefined,
-      file_identifier: updatedInformation.file_identifier,
-      main_category: updatedInformation.main_category,
-      sub_category: updatedInformation.sub_category,
-      user_identifier: updatedInformation.user_identifier,
-      user_name: updatedInformation.user_name,
-      created_at: updatedInformation.created_at,
-      updated_at: updatedInformation.updated_at,
-    };
+    return this.mapToResponse(updatedInformation);
   }
 
   async delete(identifier: string): Promise<InformationDeleteResponseDto> {
@@ -214,6 +173,43 @@ export class InformationService {
       );
     }
 
+    return this.mapToResponse(information);
+  }
+
+  async findAll(): Promise<InformationViewResponseDto[]> {
+    const informations = await this.informationRepository.findAll();
+    return informations.map((info) => this.mapToResponse(info));
+  }
+
+  async findByCategory(
+    categoryIdentifier: string,
+  ): Promise<InformationViewResponseDto[]> {
+    const informations =
+      await this.informationRepository.findByCategoryIdentifier(
+        categoryIdentifier,
+      );
+    return informations.map((info) => this.mapToResponse(info));
+  }
+
+  async findBySubCategory(
+    subCategoryIdentifier: string,
+  ): Promise<InformationViewResponseDto[]> {
+    const informations =
+      await this.informationRepository.findBySubCategoryIdentifier(
+        subCategoryIdentifier,
+      );
+    return informations.map((info) => this.mapToResponse(info));
+  }
+
+  private async validateFileExists(fileId: number): Promise<void> {
+    const file = await this.fileRepository.findOne({ where: { id: fileId } });
+
+    if (!file) {
+      throw new NotFoundException(`Arquivo com ID ${fileId} não encontrado`);
+    }
+  }
+
+  private mapToResponse(information: Information): InformationViewResponseDto {
     return {
       identifier: information.identifier,
       question: information.question,
@@ -230,129 +226,21 @@ export class InformationService {
           }
         : undefined,
       file_identifier: information.file_identifier,
-      main_category: information.main_category,
-      sub_category: information.sub_category,
+      category_identifier: information.category_identifier,
+      category: {
+        identifier: information.category.identifier,
+        name: information.category.name,
+      },
+      sub_category_identifier: information.sub_category_identifier,
+      subCategory: {
+        identifier: information.subCategory.identifier,
+        name: information.subCategory.name,
+        category_identifier: information.subCategory.category_identifier,
+      },
       user_identifier: information.user_identifier,
       user_name: information.user_name,
       created_at: information.created_at,
       updated_at: information.updated_at,
     };
-  }
-
-  async findAll(): Promise<InformationViewResponseDto[]> {
-    const informations = await this.informationRepository.findAll();
-
-    return informations.map((information): InformationViewResponseDto => {
-      return {
-        identifier: information.identifier,
-        question: information.question,
-        content: information.content,
-        file: information.file
-          ? {
-              id: information.file.id,
-              originalName: information.file.originalName,
-              fileName: information.file.fileName,
-              path: information.file.path,
-              mimetype: information.file.mimetype,
-              size: information.file.size,
-              uploaded_at: information.file.uploaded_at,
-            }
-          : undefined,
-        file_identifier: information.file_identifier,
-        main_category: information.main_category,
-        sub_category: information.sub_category,
-        user_identifier: information.user_identifier,
-        user_name: information.user_name,
-        created_at: information.created_at,
-        updated_at: information.updated_at,
-      };
-    });
-  }
-
-  async findByMainCategory(
-    mainCategory: WikiMainCategory,
-  ): Promise<InformationViewResponseDto[]> {
-    const informations =
-      await this.informationRepository.findByMainCategory(mainCategory);
-
-    return informations.map((information): InformationViewResponseDto => {
-      return {
-        identifier: information.identifier,
-        question: information.question,
-        content: information.content,
-        file: information.file
-          ? {
-              id: information.file.id,
-              originalName: information.file.originalName,
-              fileName: information.file.fileName,
-              path: information.file.path,
-              mimetype: information.file.mimetype,
-              size: information.file.size,
-              uploaded_at: information.file.uploaded_at,
-            }
-          : undefined,
-        file_identifier: information.file_identifier,
-        main_category: information.main_category,
-        sub_category: information.sub_category,
-        user_identifier: information.user_identifier,
-        user_name: information.user_name,
-        created_at: information.created_at,
-        updated_at: information.updated_at,
-      };
-    });
-  }
-
-  async findBySubCategory(
-    subCategory: WikiSubCategory,
-  ): Promise<InformationViewResponseDto[]> {
-    const informations =
-      await this.informationRepository.findBySubCategory(subCategory);
-
-    return informations.map((information): InformationViewResponseDto => {
-      return {
-        identifier: information.identifier,
-        question: information.question,
-        content: information.content,
-        file: information.file
-          ? {
-              id: information.file.id,
-              originalName: information.file.originalName,
-              fileName: information.file.fileName,
-              path: information.file.path,
-              mimetype: information.file.mimetype,
-              size: information.file.size,
-              uploaded_at: information.file.uploaded_at,
-            }
-          : undefined,
-        file_identifier: information.file_identifier,
-        main_category: information.main_category,
-        sub_category: information.sub_category,
-        user_identifier: information.user_identifier,
-        user_name: information.user_name,
-        created_at: information.created_at,
-        updated_at: information.updated_at,
-      };
-    });
-  }
-
-  private validateCategoryHierarchy(
-    mainCategory: WikiMainCategory,
-    subCategory: WikiSubCategory,
-  ): void {
-    const validSubCategories = CATEGORY_HIERARCHY[mainCategory];
-
-    if (!validSubCategories || !validSubCategories.includes(subCategory)) {
-      throw new BadRequestException(
-        `A subcategoria ${subCategory} não pertence à categoria principal ${mainCategory}`,
-      );
-    }
-  }
-
-  private async validateFileExists(fileId: number): Promise<void> {
-    const file = await this.fileRepository.findOne({ where: { id: fileId } });
-
-    if (!file) {
-      throw new NotFoundException(`Arquivo com ID ${fileId} não encontrado`);
-    }
   }
 }

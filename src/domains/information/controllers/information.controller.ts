@@ -18,11 +18,9 @@ import { InformationCreateResponseDto } from '../dtos/information.create.respons
 import { InformationUpdateResponseDto } from '../dtos/information.update.response.dto';
 import { InformationViewResponseDto } from '../dtos/information.view.response.dto';
 import { InformationDeleteResponseDto } from '../dtos/information.delete.response.dto';
-import { WikiMainCategory, WikiSubCategory } from '../enums/categories.enum';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { JwtUser } from '../../auth/interfaces/jwt-user.interface';
-import { CategoryHierarchyResponse } from '../services/information.service';
 
 @Controller('information')
 @UseGuards(JwtAuthGuard)
@@ -66,21 +64,17 @@ export class InformationController {
   @Get()
   @HttpCode(HttpStatus.OK)
   async findAll(
-    @Query('mainCategory') mainCategory?: WikiMainCategory,
-    @Query('subCategory') subCategory?: WikiSubCategory,
+    @Query('categoryIdentifier') categoryIdentifier?: string,
+    @Query('subCategoryIdentifier') subCategoryIdentifier?: string,
   ): Promise<InformationViewResponseDto[]> {
-    if (subCategory) {
-      return await this.informationService.findBySubCategory(subCategory);
+    if (subCategoryIdentifier) {
+      return await this.informationService.findBySubCategory(
+        subCategoryIdentifier,
+      );
     }
-    if (mainCategory) {
-      return await this.informationService.findByMainCategory(mainCategory);
+    if (categoryIdentifier) {
+      return await this.informationService.findByCategory(categoryIdentifier);
     }
     return await this.informationService.findAll();
-  }
-
-  @Get('types/categories')
-  @HttpCode(HttpStatus.OK)
-  getCategories(): CategoryHierarchyResponse {
-    return this.informationService.getCategories();
   }
 }

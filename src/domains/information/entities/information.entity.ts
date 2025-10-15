@@ -1,6 +1,7 @@
 import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { File } from './file.entity';
-import { WikiMainCategory, WikiSubCategory } from '../enums/categories.enum';
+import { Category } from '../../category/entities/category.entity';
+import { SubCategory } from '../../category/entities/subcategory.entity';
 
 @Entity('information')
 export class Information {
@@ -21,10 +22,18 @@ export class Information {
   file_identifier: number;
 
   @Column({ type: 'varchar' })
-  main_category: WikiMainCategory;
+  category_identifier: string;
+
+  @ManyToOne(() => Category, { eager: true })
+  @JoinColumn({ name: 'category_identifier' })
+  category: Category;
 
   @Column({ type: 'varchar' })
-  sub_category: WikiSubCategory;
+  sub_category_identifier: string;
+
+  @ManyToOne(() => SubCategory, { eager: true })
+  @JoinColumn({ name: 'sub_category_identifier' })
+  subCategory: SubCategory;
 
   @Column({ type: 'varchar' })
   user_identifier: string;

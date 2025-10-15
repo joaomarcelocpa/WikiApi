@@ -1,5 +1,4 @@
-import { IsString, IsOptional, IsEnum, IsNumber } from 'class-validator';
-import { WikiMainCategory, WikiSubCategory } from '../enums/categories.enum';
+import { IsString, IsOptional, IsNumber } from 'class-validator';
 
 export class InformationUpdateDto {
   @IsOptional()
@@ -15,10 +14,10 @@ export class InformationUpdateDto {
   file_identifier?: number;
 
   @IsOptional()
-  @IsEnum(WikiMainCategory)
-  main_category?: WikiMainCategory;
+  @IsString()
+  category_identifier?: string;
 
   @IsOptional()
-  @IsEnum(WikiSubCategory)
-  sub_category?: WikiSubCategory;
+  @IsString()
+  sub_category_identifier?: string;
 }

@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Information } from '../entities/information.entity';
-import { WikiMainCategory, WikiSubCategory } from '../enums/categories.enum';
 import { createId } from '@paralleldrive/cuid2';
 
 @Injectable()
@@ -14,43 +13,45 @@ export class InformationRepository {
 
   async create(information: Partial<Information>): Promise<Information> {
     const entity = this.repository.create({
-      identifier: createId(), // Gera o ID explicitamente
+      identifier: createId(),
       ...information,
     });
-    return await this.repository.save(entity);
+    const saved = await this.repository.save(entity);
+
+    return await this.findByIdentifier(saved.identifier);
   }
 
   async findByIdentifier(identifier: string): Promise<Information | null> {
     return await this.repository.findOne({
       where: { identifier, deleted: false },
-      relations: ['file'],
+      relations: ['file', 'category', 'subCategory'],
     });
   }
 
   async findAll(): Promise<Information[]> {
     return await this.repository.find({
       where: { deleted: false },
-      relations: ['file'],
+      relations: ['file', 'category', 'subCategory'],
       order: { created_at: 'DESC' },
     });
   }
 
-  async findByMainCategory(
-    mainCategory: WikiMainCategory,
+  async findByCategoryIdentifier(
+    categoryIdentifier: string,
   ): Promise<Information[]> {
     return await this.repository.find({
-      where: { main_category: mainCategory, deleted: false },
-      relations: ['file'],
+      where: { category_identifier: categoryIdentifier, deleted: false },
+      relations: ['file', 'category', 'subCategory'],
       order: { created_at: 'DESC' },
     });
   }
 
-  async findBySubCategory(
-    subCategory: WikiSubCategory,
+  async findBySubCategoryIdentifier(
+    subCategoryIdentifier: string,
   ): Promise<Information[]> {
     return await this.repository.find({
-      where: { sub_category: subCategory, deleted: false },
-      relations: ['file'],
+      where: { sub_category_identifier: subCategoryIdentifier, deleted: false },
+      relations: ['file', 'category', 'subCategory'],
       order: { created_at: 'DESC' },
     });
   }

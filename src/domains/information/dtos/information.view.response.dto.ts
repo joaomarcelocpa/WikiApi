@@ -1,5 +1,8 @@
-import { WikiMainCategory, WikiSubCategory } from '../enums/categories.enum';
-import { FileResponseDto } from './information.create.response.dto';
+import {
+  CategoryInfoDto,
+  FileResponseDto,
+  SubCategoryInfoDto,
+} from './information.create.response.dto';
 
 export class InformationViewResponseDto {
   identifier: string;
@@ -7,8 +10,10 @@ export class InformationViewResponseDto {
   content: string;
   file?: FileResponseDto;
   file_identifier?: number;
-  main_category: WikiMainCategory;
-  sub_category: WikiSubCategory;
+  category_identifier: string;
+  category: CategoryInfoDto;
+  sub_category_identifier: string;
+  subCategory: SubCategoryInfoDto;
   user_identifier: string;
   user_name: string;
   created_at: Date;
