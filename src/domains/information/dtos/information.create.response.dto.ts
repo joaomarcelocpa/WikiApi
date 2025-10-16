@@ -23,6 +23,7 @@ export class InformationCreateResponseDto {
   identifier: string;
   question: string;
   content: string;
+  slug: string;
   file?: FileResponseDto;
   file_identifier?: number;
   category_identifier: string;

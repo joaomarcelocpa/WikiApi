@@ -62,15 +62,19 @@ export class InformationService {
       await this.validateFileExists(dto.file_identifier);
     }
 
-    const information = await this.informationRepository.create({
-      question: dto.question,
-      content: dto.content,
-      file_identifier: dto.file_identifier,
-      category_identifier: dto.category_identifier,
-      sub_category_identifier: dto.sub_category_identifier,
-      user_identifier: userId,
-      user_name: userName,
-    });
+    const information = await this.informationRepository.create(
+      {
+        question: dto.question,
+        content: dto.content,
+        file_identifier: dto.file_identifier,
+        category_identifier: dto.category_identifier,
+        sub_category_identifier: dto.sub_category_identifier,
+        user_identifier: userId,
+        user_name: userName,
+      },
+      category.name,
+      subCategory.name,
+    );
 
     return this.mapToResponse(information);
   }
@@ -88,6 +92,9 @@ export class InformationService {
       );
     }
 
+    let categoryName: string | undefined;
+    let subCategoryName: string | undefined;
+
     if (dto.category_identifier) {
       const category = await this.categoryRepository.findOne({
         where: { identifier: dto.category_identifier, deleted: false },
@@ -98,9 +105,9 @@ export class InformationService {
           `Categoria com identificador ${dto.category_identifier} não encontrada`,
         );
       }
+      categoryName = category.name;
     }
 
-    // Validar subcategoria se fornecida
     if (dto.sub_category_identifier) {
       const categoryId =
         dto.category_identifier || information.category_identifier;
@@ -118,6 +125,7 @@ export class InformationService {
           `Subcategoria com identificador ${dto.sub_category_identifier} não encontrada ou não pertence à categoria selecionada`,
         );
       }
+      subCategoryName = subCategory.name;
     }
 
     if (dto.file_identifier !== undefined && dto.file_identifier !== null) {
@@ -127,6 +135,8 @@ export class InformationService {
     const updatedInformation = await this.informationRepository.update(
       identifier,
       dto,
+      categoryName,
+      subCategoryName,
     );
 
     if (!updatedInformation) {
@@ -201,6 +211,16 @@ export class InformationService {
     return informations.map((info) => this.mapToResponse(info));
   }
 
+  async findBySlug(slug: string): Promise<InformationViewResponseDto> {
+    const information = await this.informationRepository.findBySlug(slug);
+
+    if (!information) {
+      throw new NotFoundException(`Informação com slug ${slug} não encontrada`);
+    }
+
+    return this.mapToResponse(information);
+  }
+
   private async validateFileExists(fileId: number): Promise<void> {
     const file = await this.fileRepository.findOne({ where: { id: fileId } });
 
@@ -214,6 +234,7 @@ export class InformationService {
       identifier: information.identifier,
       question: information.question,
       content: information.content,
+      slug: information.slug,
       file: information.file
         ? {
             id: information.file.id,

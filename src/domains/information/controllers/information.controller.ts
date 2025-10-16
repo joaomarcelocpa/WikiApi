@@ -55,6 +55,14 @@ export class InformationController {
     return await this.informationService.delete(identifier);
   }
 
+  @Get('slug/*')
+  @HttpCode(HttpStatus.OK)
+  async findBySlug(
+    @Param('0') slug: string,
+  ): Promise<InformationViewResponseDto> {
+    return await this.informationService.findBySlug(slug);
+  }
+
   @Get(':identifier')
   @HttpCode(HttpStatus.OK)
   async findOne(

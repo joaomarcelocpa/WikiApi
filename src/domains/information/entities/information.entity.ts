@@ -14,6 +14,9 @@ export class Information {
   @Column({ type: 'text' })
   content: string;
 
+  @Column({ type: 'varchar', unique: true })
+  slug: string;
+
   @ManyToOne(() => File, { nullable: true, eager: true })
   @JoinColumn({ name: 'file_identifier' })
   file: File;
