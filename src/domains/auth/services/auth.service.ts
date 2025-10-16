@@ -41,19 +41,4 @@ export class AuthService {
       },
     };
   }
-
-  async validateUser(userId: string) {
-    const user = await this.userRepository.findById(userId);
-
-    if (!user) {
-      throw new UnauthorizedException('Usuário não encontrado');
-    }
-
-    return {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      type: user.type,
-    };
-  }
 }
