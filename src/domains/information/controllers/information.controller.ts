@@ -60,7 +60,8 @@ export class InformationController {
   async findBySlug(
     @Param('path') slug: string,
   ): Promise<InformationViewResponseDto> {
-    return await this.informationService.findBySlug(slug);
+    const normalizedSlug = slug.split(',').join('/');
+    return await this.informationService.findBySlug(normalizedSlug);
   }
 
   @Get(':identifier')
