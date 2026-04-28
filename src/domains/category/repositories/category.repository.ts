@@ -111,15 +111,16 @@ export class CategoryRepository {
   }
 
   async softDelete(identifier: string): Promise<boolean> {
+    const now = new Date();
     const result = await this.categoryRepository.update(
       { identifier, deleted: false },
-      { deleted: true, updated_at: new Date() },
+      { deleted: true, deleted_at: now, updated_at: now },
     );
 
     if ((result.affected ?? 0) > 0) {
       await this.subCategoryRepository.update(
         { category_identifier: identifier, deleted: false },
-        { deleted: true, updated_at: new Date() },
+        { deleted: true, deleted_at: now, updated_at: now },
       );
       return true;
     }
@@ -139,10 +140,22 @@ export class CategoryRepository {
     return await this.subCategoryRepository.save(subCategory);
   }
 
+  async updateSubCategory(
+    identifier: string,
+    data: Partial<SubCategory>,
+  ): Promise<SubCategory | null> {
+    await this.subCategoryRepository.update(
+      { identifier, deleted: false },
+      { ...data, updated_at: new Date() },
+    );
+    return await this.findSubCategoryByIdentifier(identifier);
+  }
+
   async softDeleteSubCategory(identifier: string): Promise<boolean> {
+    const now = new Date();
     const result = await this.subCategoryRepository.update(
       { identifier, deleted: false },
-      { deleted: true, updated_at: new Date() },
+      { deleted: true, deleted_at: now, updated_at: now },
     );
     return (result.affected ?? 0) > 0;
   }

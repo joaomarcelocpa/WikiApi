@@ -12,6 +12,7 @@ import { CategoryViewResponseDto } from '../dtos/category.view.dto';
 import { CategoryDeleteResponseDto } from '../dtos/category.delete.response.dto';
 import {
   SubCategoryCreateDto,
+  SubCategoryUpdateDto,
   SubCategoryDeleteResponseDto,
   SubCategoryCreateResponseDto,
 } from '../dtos/subcategory.create.dto';
@@ -214,22 +215,59 @@ export class CategoryService {
     };
   }
 
-  async createSubCategory(
-    dto: SubCategoryCreateDto,
+  async updateSubCategory(
+    categoryIdentifier: string,
+    identifier: string,
+    dto: SubCategoryUpdateDto,
   ): Promise<SubCategoryCreateResponseDto> {
-    const category = await this.categoryRepository.findByIdentifier(
-      dto.category_identifier,
-    );
+    const category =
+      await this.categoryRepository.findByIdentifier(categoryIdentifier);
 
     if (!category) {
       throw new NotFoundException(
-        `Categoria com identificador ${dto.category_identifier} não encontrada`,
+        `Categoria com identificador ${categoryIdentifier} não encontrada`,
+      );
+    }
+
+    const subCategory =
+      await this.categoryRepository.findSubCategoryByIdentifier(identifier);
+
+    if (!subCategory) {
+      throw new NotFoundException(
+        `Subcategoria com identificador ${identifier} não encontrada`,
+      );
+    }
+
+    const updated = await this.categoryRepository.updateSubCategory(
+      identifier,
+      dto,
+    );
+
+    return {
+      identifier: updated.identifier,
+      name: updated.name,
+      category_identifier: updated.category_identifier,
+      created_at: updated.created_at,
+      updated_at: updated.updated_at,
+    };
+  }
+
+  async createSubCategory(
+    categoryIdentifier: string,
+    dto: SubCategoryCreateDto,
+  ): Promise<SubCategoryCreateResponseDto> {
+    const category =
+      await this.categoryRepository.findByIdentifier(categoryIdentifier);
+
+    if (!category) {
+      throw new NotFoundException(
+        `Categoria com identificador ${categoryIdentifier} não encontrada`,
       );
     }
 
     const subCategory = await this.categoryRepository.createSubCategory(
       dto.name,
-      dto.category_identifier,
+      categoryIdentifier,
     );
 
     return {
@@ -242,8 +280,18 @@ export class CategoryService {
   }
 
   async deleteSubCategory(
+    categoryIdentifier: string,
     identifier: string,
   ): Promise<SubCategoryDeleteResponseDto> {
+    const category =
+      await this.categoryRepository.findByIdentifier(categoryIdentifier);
+
+    if (!category) {
+      throw new NotFoundException(
+        `Categoria com identificador ${categoryIdentifier} não encontrada`,
+      );
+    }
+
     const subCategory =
       await this.categoryRepository.findSubCategoryByIdentifier(identifier);
 

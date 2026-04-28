@@ -9,7 +9,6 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-  UseGuards,
 } from '@nestjs/common';
 import { InformationService } from '../services/information.service';
 import { InformationCreateDto } from '../dtos/information.create.dto';
@@ -18,7 +17,8 @@ import { InformationCreateResponseDto } from '../dtos/information.create.respons
 import { InformationUpdateResponseDto } from '../dtos/information.update.response.dto';
 import { InformationViewResponseDto } from '../dtos/information.view.response.dto';
 import { InformationDeleteResponseDto } from '../dtos/information.delete.response.dto';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { UserType } from '../../users/enums/user-type.enum';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { JwtUser } from '../../auth/interfaces/jwt-user.interface';
 
@@ -27,7 +27,7 @@ export class InformationController {
   constructor(private readonly informationService: InformationService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @Roles(UserType.MASTER, UserType.DEVELOPER)
   @HttpCode(HttpStatus.CREATED)
   async create(
     @Body() dto: InformationCreateDto,
@@ -37,7 +37,7 @@ export class InformationController {
   }
 
   @Put(':identifier')
-  @UseGuards(JwtAuthGuard)
+  @Roles(UserType.MASTER, UserType.DEVELOPER)
   @HttpCode(HttpStatus.OK)
   async update(
     @Param('identifier') identifier: string,
@@ -47,7 +47,7 @@ export class InformationController {
   }
 
   @Delete(':identifier')
-  @UseGuards(JwtAuthGuard)
+  @Roles(UserType.MASTER, UserType.DEVELOPER)
   @HttpCode(HttpStatus.OK)
   async delete(
     @Param('identifier') identifier: string,
@@ -55,10 +55,10 @@ export class InformationController {
     return await this.informationService.delete(identifier);
   }
 
-  @Get('slug/*')
+  @Get('slug/*path')
   @HttpCode(HttpStatus.OK)
   async findBySlug(
-    @Param('0') slug: string,
+    @Param('path') slug: string,
   ): Promise<InformationViewResponseDto> {
     return await this.informationService.findBySlug(slug);
   }

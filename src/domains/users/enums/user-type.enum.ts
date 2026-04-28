@@ -1,4 +1,6 @@
 export enum UserType {
+  MASTER = 'MASTER',
+  DEVELOPER = 'DEVELOPER',
   FINANCE = 'FINANCE',
   SUPER = 'SUPER',
   SUPPORT = 'SUPPORT',

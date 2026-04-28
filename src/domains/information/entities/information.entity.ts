@@ -44,12 +44,15 @@ export class Information {
   @Column({ type: 'varchar' })
   user_name: string;
 
-  @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
 
-  @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at: Date;
 
   @Column({ type: 'boolean', default: false })
   deleted: boolean;
+
+  @Column({ type: 'timestamp', nullable: true, default: null })
+  deleted_at: Date | null;
 }

@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: wiki_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: wiki
+      POSTGRES_PASSWORD: wiki123
+      POSTGRES_DB: wiki_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - wiki_data:/var/lib/postgresql/data
+
+volumes:
+  wiki_data:

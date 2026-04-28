@@ -9,7 +9,6 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-  // UseGuards,
 } from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import { UserCreateDto } from '../dtos/user.create.dto';
@@ -19,22 +18,23 @@ import { UserUpdateResponseDto } from '../dtos/user.update.response.dto';
 import { UserViewResponseDto } from '../dtos/user.view.response.dto';
 import { UserDeleteResponseDto } from '../dtos/user.delete.response.dto';
 import { UserType } from '../enums/user-type.enum';
-// import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { JwtUser } from '../../auth/interfaces/jwt-user.interface';
 
 @Controller('users')
-// @UseGuards(JwtAuthGuard)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
+  @Roles(UserType.MASTER)
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() dto: UserCreateDto): Promise<UserCreateResponseDto> {
     return await this.userService.create(dto);
   }
 
   @Put(':id')
+  @Roles(UserType.MASTER)
   @HttpCode(HttpStatus.OK)
   async update(
     @Param('id') id: string,
@@ -44,9 +44,16 @@ export class UserController {
   }
 
   @Delete(':id')
+  @Roles(UserType.MASTER)
   @HttpCode(HttpStatus.OK)
   async delete(@Param('id') id: string): Promise<UserDeleteResponseDto> {
     return await this.userService.delete(id);
+  }
+
+  @Get('me/profile')
+  @HttpCode(HttpStatus.OK)
+  getProfile(@CurrentUser() user: JwtUser): JwtUser {
+    return user;
   }
 
   @Get(':id')
@@ -65,11 +72,5 @@ export class UserController {
     }
 
     return await this.userService.findAll();
-  }
-
-  @Get('me/profile')
-  @HttpCode(HttpStatus.OK)
-  getProfile(@CurrentUser() user: JwtUser): JwtUser {
-    return user;
   }
 }

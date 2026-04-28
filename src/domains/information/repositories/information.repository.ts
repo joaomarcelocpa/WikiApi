@@ -135,9 +135,10 @@ export class InformationRepository {
   }
 
   async softDelete(identifier: string): Promise<boolean> {
+    const now = new Date();
     const result = await this.repository.update(
       { identifier, deleted: false },
-      { deleted: true, updated_at: new Date() },
+      { deleted: true, deleted_at: now, updated_at: now },
     );
     return (result.affected ?? 0) > 0;
   }

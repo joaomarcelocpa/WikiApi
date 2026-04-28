@@ -8,7 +8,6 @@ import {
   Param,
   HttpCode,
   HttpStatus,
-  UseGuards,
 } from '@nestjs/common';
 import { CategoryService } from '../services/category.service';
 import { CategoryCreateDto } from '../dtos/category.create.dto';
@@ -19,17 +18,19 @@ import { CategoryViewResponseDto } from '../dtos/category.view.dto';
 import { CategoryDeleteResponseDto } from '../dtos/category.delete.response.dto';
 import {
   SubCategoryCreateDto,
+  SubCategoryUpdateDto,
   SubCategoryDeleteResponseDto,
   SubCategoryCreateResponseDto,
 } from '../dtos/subcategory.create.dto';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { UserType } from '../../users/enums/user-type.enum';
 
 @Controller('category')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @Roles(UserType.MASTER, UserType.DEVELOPER)
   @HttpCode(HttpStatus.CREATED)
   async create(
     @Body() dto: CategoryCreateDto,
@@ -38,7 +39,7 @@ export class CategoryController {
   }
 
   @Put(':identifier')
-  @UseGuards(JwtAuthGuard)
+  @Roles(UserType.MASTER, UserType.DEVELOPER)
   @HttpCode(HttpStatus.OK)
   async update(
     @Param('identifier') identifier: string,
@@ -48,7 +49,7 @@ export class CategoryController {
   }
 
   @Delete(':identifier')
-  @UseGuards(JwtAuthGuard)
+  @Roles(UserType.MASTER, UserType.DEVELOPER)
   @HttpCode(HttpStatus.OK)
   async delete(
     @Param('identifier') identifier: string,
@@ -70,40 +71,48 @@ export class CategoryController {
     return await this.categoryService.findAll();
   }
 
-  @Get(':categoryIdentifier/subcategories')
-  @HttpCode(HttpStatus.OK)
-  async findSubCategoriesByCategory(
-    @Param('categoryIdentifier') categoryIdentifier: string,
-  ) {
-    const category =
-      await this.categoryService.findSubCategoriesByCategory(
-        categoryIdentifier,
-      );
+  @Post(':categoryId/subcategory')
+  @Roles(UserType.MASTER, UserType.DEVELOPER)
+  @HttpCode(HttpStatus.CREATED)
+  async createSubCategory(
+    @Param('categoryId') categoryId: string,
+    @Body() dto: SubCategoryCreateDto,
+  ): Promise<SubCategoryCreateResponseDto> {
+    return await this.categoryService.createSubCategory(categoryId, dto);
+  }
 
+  @Get(':categoryId/subcategory')
+  @HttpCode(HttpStatus.OK)
+  async findSubCategories(@Param('categoryId') categoryId: string) {
+    const category =
+      await this.categoryService.findSubCategoriesByCategory(categoryId);
     return category.subCategories || [];
   }
 
-  @Get('subcategory/:identifier')
+  @Get(':categoryId/subcategory/:id')
   @HttpCode(HttpStatus.OK)
-  async findSubCategoryByIdentifier(@Param('identifier') identifier: string) {
-    return await this.categoryService.findSubCategoryByIdentifier(identifier);
+  async findSubCategoryById(@Param('id') id: string) {
+    return await this.categoryService.findSubCategoryByIdentifier(id);
   }
 
-  @Post('subcategory')
-  @UseGuards(JwtAuthGuard)
-  @HttpCode(HttpStatus.CREATED)
-  async createSubCategory(
-    @Body() dto: SubCategoryCreateDto,
+  @Put(':categoryId/subcategory/:id')
+  @Roles(UserType.MASTER, UserType.DEVELOPER)
+  @HttpCode(HttpStatus.OK)
+  async updateSubCategory(
+    @Param('categoryId') categoryId: string,
+    @Param('id') id: string,
+    @Body() dto: SubCategoryUpdateDto,
   ): Promise<SubCategoryCreateResponseDto> {
-    return await this.categoryService.createSubCategory(dto);
+    return await this.categoryService.updateSubCategory(categoryId, id, dto);
   }
 
-  @Delete('subcategory/:identifier')
-  @UseGuards(JwtAuthGuard)
+  @Delete(':categoryId/subcategory/:id')
+  @Roles(UserType.MASTER, UserType.DEVELOPER)
   @HttpCode(HttpStatus.OK)
   async deleteSubCategory(
-    @Param('identifier') identifier: string,
+    @Param('categoryId') categoryId: string,
+    @Param('id') id: string,
   ): Promise<SubCategoryDeleteResponseDto> {
-    return await this.categoryService.deleteSubCategory(identifier);
+    return await this.categoryService.deleteSubCategory(categoryId, id);
   }
 }

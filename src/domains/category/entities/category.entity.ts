@@ -19,10 +19,13 @@ export class Category {
   @Column({ type: 'boolean', default: false })
   deleted: boolean;
 
-  @CreateDateColumn({ type: 'datetime' })
+  @Column({ type: 'timestamp', nullable: true, default: null })
+  deleted_at: Date | null;
+
+  @CreateDateColumn({ type: 'timestamp' })
   created_at: Date;
 
-  @UpdateDateColumn({ type: 'datetime' })
+  @UpdateDateColumn({ type: 'timestamp' })
   updated_at: Date;
 
   @OneToMany(() => SubCategory, (subCategory) => subCategory.category)

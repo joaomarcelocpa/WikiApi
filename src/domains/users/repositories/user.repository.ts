@@ -64,9 +64,10 @@ export class UserRepository {
   }
 
   async softDelete(id: string): Promise<boolean> {
+    const now = new Date();
     const result = await this.repository.update(
       { id, deleted: false },
-      { deleted: true, updated_at: new Date() },
+      { deleted: true, deleted_at: now, updated_at: now },
     );
     return (result.affected ?? 0) > 0;
   }

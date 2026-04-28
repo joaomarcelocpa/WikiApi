@@ -20,6 +20,12 @@ export class File {
   @Column({ type: 'int' })
   size: number;
 
-  @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   uploaded_at: Date;
+
+  @Column({ type: 'boolean', default: false })
+  deleted: boolean;
+
+  @Column({ type: 'timestamp', nullable: true, default: null })
+  deleted_at: Date | null;
 }

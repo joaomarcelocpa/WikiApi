@@ -32,4 +32,7 @@ export class User {
 
   @Column({ type: 'boolean', default: false })
   deleted: boolean;
+
+  @Column({ type: 'timestamp', nullable: true, default: null })
+  deleted_at: Date | null;
 }
