@@ -117,6 +117,7 @@ export class InformationService {
   async update(
     identifier: string,
     dto: InformationUpdateDto,
+    file?: Express.Multer.File,
   ): Promise<InformationUpdateResponseDto> {
     const information =
       await this.informationRepository.findByIdentifier(identifier);
@@ -163,7 +164,30 @@ export class InformationService {
       subCategoryName = subCategory.name;
     }
 
-    if (dto.file_identifier !== undefined && dto.file_identifier !== null) {
+    if (file) {
+      if (!ALLOWED_MIMETYPES.includes(file.mimetype)) {
+        throw new BadRequestException(
+          `Tipo de arquivo não suportado. Use: jpeg, png, webp ou gif`,
+        );
+      }
+
+      const ext = extname(file.originalname);
+      const fileName = `${createId()}${ext}`;
+      const key = `information/${identifier}/${fileName}`;
+      const url = await this.s3Service.upload(file.buffer, key, file.mimetype);
+
+      const savedFile = await this.fileRepository.save(
+        this.fileRepository.create({
+          originalName: file.originalname,
+          fileName,
+          path: url,
+          mimetype: file.mimetype,
+          size: file.size,
+        }),
+      );
+
+      dto.file_identifier = savedFile.id;
+    } else if (dto.file_identifier !== undefined && dto.file_identifier !== null) {
       await this.validateFileExists(dto.file_identifier);
     }
 
@@ -223,6 +247,12 @@ export class InformationService {
 
   async findAll(): Promise<InformationViewResponseDto[]> {
     const informations = await this.informationRepository.findAll();
+    return informations.map((info) => this.mapToResponse(info));
+  }
+
+  async search(query: string): Promise<InformationViewResponseDto[]> {
+    if (!query.trim()) return [];
+    const informations = await this.informationRepository.search(query.trim());
     return informations.map((info) => this.mapToResponse(info));
   }
 

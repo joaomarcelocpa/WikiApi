@@ -44,11 +44,13 @@ export class InformationController {
   @Put(':identifier')
   @Roles(UserType.MASTER, UserType.DEVELOPER)
   @HttpCode(HttpStatus.OK)
+  @UseInterceptors(FileInterceptor('file'))
   async update(
     @Param('identifier') identifier: string,
     @Body() dto: InformationUpdateDto,
+    @UploadedFile() file?: Express.Multer.File,
   ): Promise<InformationUpdateResponseDto> {
-    return await this.informationService.update(identifier, dto);
+    return await this.informationService.update(identifier, dto, file);
   }
 
   @Delete(':identifier')
@@ -82,7 +84,11 @@ export class InformationController {
   async findAll(
     @Query('categoryIdentifier') categoryIdentifier?: string,
     @Query('subCategoryIdentifier') subCategoryIdentifier?: string,
+    @Query('search') search?: string,
   ): Promise<InformationViewResponseDto[]> {
+    if (search) {
+      return await this.informationService.search(search);
+    }
     if (subCategoryIdentifier) {
       return await this.informationService.findBySubCategory(
         subCategoryIdentifier,

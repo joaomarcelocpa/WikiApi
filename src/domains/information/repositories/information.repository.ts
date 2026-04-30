@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { Information } from '../entities/information.entity';
 import { createId } from '@paralleldrive/cuid2';
 import { SlugUtil } from '../utils/slug.util';
@@ -61,6 +61,18 @@ export class InformationRepository {
   async findAll(): Promise<Information[]> {
     return await this.repository.find({
       where: { deleted: false },
+      relations: ['file', 'category', 'subCategory'],
+      order: { created_at: 'DESC' },
+    });
+  }
+
+  async search(query: string): Promise<Information[]> {
+    const term = `%${query}%`;
+    return await this.repository.find({
+      where: [
+        { question: ILike(term), deleted: false },
+        { content: ILike(term), deleted: false },
+      ],
       relations: ['file', 'category', 'subCategory'],
       order: { created_at: 'DESC' },
     });
