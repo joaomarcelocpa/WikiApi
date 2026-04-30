@@ -3,6 +3,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { extname } from 'path';
+import { createId } from '@paralleldrive/cuid2';
 import { InformationRepository } from '../repositories/information.repository';
 import { InformationCreateDto } from '../dtos/information.create.dto';
 import { InformationUpdateDto } from '../dtos/information.update.dto';
@@ -16,11 +18,15 @@ import { File } from '../entities/file.entity';
 import { Category } from '../../category/entities/category.entity';
 import { SubCategory } from '../../category/entities/subcategory.entity';
 import { Information } from '../entities/information.entity';
+import { S3Service } from '../../../modules/s3/s3.service';
+
+const ALLOWED_MIMETYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 @Injectable()
 export class InformationService {
   constructor(
     private readonly informationRepository: InformationRepository,
+    private readonly s3Service: S3Service,
     @InjectRepository(File)
     private readonly fileRepository: Repository<File>,
     @InjectRepository(Category)
@@ -33,6 +39,7 @@ export class InformationService {
     dto: InformationCreateDto,
     userId: string,
     userName: string,
+    file?: Express.Multer.File,
   ): Promise<InformationCreateResponseDto> {
     const category = await this.categoryRepository.findOne({
       where: { identifier: dto.category_identifier, deleted: false },
@@ -58,15 +65,43 @@ export class InformationService {
       );
     }
 
-    if (dto.file_identifier) {
+    const informationId = createId();
+    let fileIdentifier: number | undefined = dto.file_identifier;
+
+    if (file) {
+      if (!ALLOWED_MIMETYPES.includes(file.mimetype)) {
+        throw new BadRequestException(
+          `Tipo de arquivo não suportado. Use: jpeg, png, webp ou gif`,
+        );
+      }
+
+      const ext = extname(file.originalname);
+      const fileName = `${createId()}${ext}`;
+      const key = `information/${informationId}/${fileName}`;
+
+      const url = await this.s3Service.upload(file.buffer, key, file.mimetype);
+
+      const savedFile = await this.fileRepository.save(
+        this.fileRepository.create({
+          originalName: file.originalname,
+          fileName,
+          path: url,
+          mimetype: file.mimetype,
+          size: file.size,
+        }),
+      );
+
+      fileIdentifier = savedFile.id;
+    } else if (dto.file_identifier) {
       await this.validateFileExists(dto.file_identifier);
     }
 
     const information = await this.informationRepository.create(
       {
+        identifier: informationId,
         question: dto.question,
         content: dto.content,
-        file_identifier: dto.file_identifier,
+        file_identifier: fileIdentifier,
         category_identifier: dto.category_identifier,
         sub_category_identifier: dto.sub_category_identifier,
         user_identifier: userId,

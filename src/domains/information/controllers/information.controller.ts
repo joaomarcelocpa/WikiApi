@@ -9,7 +9,10 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { InformationService } from '../services/information.service';
 import { InformationCreateDto } from '../dtos/information.create.dto';
 import { InformationUpdateDto } from '../dtos/information.update.dto';
@@ -29,11 +32,13 @@ export class InformationController {
   @Post()
   @Roles(UserType.MASTER, UserType.DEVELOPER)
   @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(FileInterceptor('file'))
   async create(
     @Body() dto: InformationCreateDto,
     @CurrentUser() user: JwtUser,
+    @UploadedFile() file?: Express.Multer.File,
   ): Promise<InformationCreateResponseDto> {
-    return await this.informationService.create(dto, user.id, user.name);
+    return await this.informationService.create(dto, user.id, user.name, file);
   }
 
   @Put(':identifier')
